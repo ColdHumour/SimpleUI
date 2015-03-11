@@ -16,23 +16,23 @@ from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 class Draw(QtGui.QWidget):
     def __init__(self):
         super(Draw, self).__init__()
-        self.resize(600, 600)
+        self.thread = MyThread(self)
+        
+        self.f = np.cos
+        self.x_lb, self.x_ub, = 0, 0
+        self.x_step, self.x_range = 0.1, 5
+        self.pause_flag = 1
+        
         self.loadWidgets()
+        self.resize(600, 600)
         self.layout()
 
-        self.generator = cycle(enumerate(np.linspace(-np.pi, np.pi, 64, endpoint=True)))
-        self.pause_flag = 1
-        self.thread = MyThread(self)
-    
     def loadWidgets(self):
         figure = plt.figure()
         self.canvas = FigureCanvas(figure)
-        self.sp1 = figure.add_subplot(211)
-        self.draw_cos(self.sp1)
-        
-        self.sp2 = figure.add_subplot(212)
-        self.draw_sin(self.sp2)       
-            
+        self.sp = figure.add_subplot(111)
+        self.draw(self.sp, self.f)
+
         self.btn_ctrl = QtGui.QPushButton('play')
         self.connect(self.btn_ctrl, QtCore.SIGNAL('clicked()'), self.control)
         
@@ -43,33 +43,22 @@ class Draw(QtGui.QWidget):
         
         self.setLayout(box)
 
-    def draw_cos(self, subplot, x=None, isclear=True):
-        if isclear: subplot.clear()
-        if x is not None:
-            y = np.cos(x)
-            subplot.plot(x, y, color="blue", label=r"$\cos (x)$", 
-                         linewidth=1.0, linestyle="-")
-            subplot.legend()
-        subplot.set_xlim(-np.pi*1.1, np.pi*1.1)
-        subplot.set_xticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-        subplot.set_xticklabels([r"$-\pi$", r"$-\pi/2$", r"$0$",r"$\pi/2$", r"$\pi$"])
-        subplot.set_ylim(-1.1, 1.1)
-        subplot.set_yticks([-1, 0, 1])
-        subplot.set_yticklabels([r"$-1$", r"$0$", r"$+1$"])
+    def data_generator(self):
+        self.x_ub += self.x_step
+        c_lb = max(self.x_lb, self.x_ub - self.x_range)
+        c_ub = self.x_ub
+        return np.linspace(c_lb, c_ub, max(2, int((c_ub-c_lb)/self.x_step)), endpoint=True)
+    
+    def draw(self, subplot, f, x=None, isclear=True):
+        mrg = self.x_step
         
-    def draw_sin(self, subplot, x=None, isclear=True):
         if isclear: subplot.clear()
-        if x is not None:
-            y = np.sin(x)
-            subplot.plot(x, y, color="green", label=r"$\sin (x)$",
-                         linewidth=1.0, linestyle="-")
+        if x is not None:            
+            y = f(x)
+            subplot.plot(x, y, color="blue", label=r"$cos(x)$", linewidth=1.0, linestyle="-")
             subplot.legend()
-        subplot.set_xlim(-np.pi*1.1, np.pi*1.1)
-        subplot.set_xticks([-np.pi, -np.pi/2, 0, np.pi/2, np.pi])
-        subplot.set_xticklabels([r"$-\pi$", r"$-\pi/2$", r"$0$",r"$\pi/2$", r"$\pi$"])
-        subplot.set_ylim(-1.1, 1.1)
-        subplot.set_yticks([-1, 0, 1])
-        subplot.set_yticklabels([r"$-1$", r"$0$", r"$+1$"])
+            subplot.set_xlim(min(x)-mrg, max(self.x_lb+self.x_range, max(x))+mrg)
+            subplot.set_ylim(min(y)-mrg, max(y)+mrg)
     
     def control(self):
         if self.pause_flag:
@@ -83,7 +72,7 @@ class Draw(QtGui.QWidget):
     def closeEvent(self, event): # 重载退出事件，保证thread退出
         self.pause_flag = 1
         event.accept()
-
+    
 class MyThread(QtCore.QThread):
     def __init__(self, MyWindow):
         super(MyThread, self).__init__()
@@ -91,10 +80,8 @@ class MyThread(QtCore.QThread):
         
     def run(self):
         while not self.window.pause_flag:
-            i, b = self.window.generator.next()
-            x = np.linspace(-np.pi, b, i+1, endpoint=True)
-            self.window.draw_cos(self.window.sp1, x)
-            self.window.draw_sin(self.window.sp2, x)
+            x = self.window.data_generator()
+            self.window.draw(self.window.sp, self.window.f, x)
             self.window.canvas.draw()
         self.quit()
 
