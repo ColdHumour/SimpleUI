@@ -46,8 +46,9 @@ class Draw(QtGui.QWidget):
         self.f_input = QtGui.QTextEdit()
         self.f_input.setText('def f(x):\n\treturn cos(x)')
         
-        self.ctrl_btn = QtGui.QPushButton('play')
-        self.connect(self.ctrl_btn, QtCore.SIGNAL('clicked()'), self.control)
+        shcut = QtGui.QShortcut(self)
+        shcut.setKey("CTRL+RETURN")
+        self.connect(shcut, QtCore.SIGNAL("activated()"), self.control)
         
         self.x_grb = GroupBox('Independent Variable')
         self.xlb_label = QtGui.QLabel('lower bound:')
@@ -65,50 +66,18 @@ class Draw(QtGui.QWidget):
         self.clr_combo = QtGui.QComboBox()
         self.clr_combo.addItems(['blue', 'green', 'red'])
         
-        self.a_grb = GroupBox('Control Parameter')
-        self.a_chbox = QtGui.QCheckBox("Activate")
-        self.connect(self.a_chbox, QtCore.SIGNAL("stateChanged(int)"), self.activateControlParameters)        
-        self.a_label = QtGui.QLabel('Symbol:')
-        self.a_input = QtGui.QLineEdit('a')
-        self.a_input.setDisabled(not self.pctrl_flag)
-        self.alb_label = QtGui.QLabel('lower bound:')
-        self.alb_input = QtGui.QLineEdit('0')
-        self.alb_input.setDisabled(not self.pctrl_flag)
-        self.aub_label = QtGui.QLabel('upper bound:')
-        self.aub_input = QtGui.QLineEdit('5')
-        self.aub_input.setDisabled(not self.pctrl_flag)
-        self.astep_label = QtGui.QLabel('Min step')
-        self.astep_input = QtGui.QLineEdit('1')
-        self.astep_input.setDisabled(not self.pctrl_flag)
-        
-    def loadSlider(self):
-        alb = float(unicode(self.alb_input.text()))
-        aub = float(unicode(self.aub_input.text()))
-        astep = float(unicode(self.astep_input.text()))
-        an = max(1, int((aub-alb)/astep))
-        
-        self.s_grb = GroupBox('Parameter Slider')
-        self.s_label = QtGui.QLabel('Value: %.2f' % alb)
-        self.slider = QtGui.QSlider(QtCore.Qt.Horizontal)
-        self.slider.setRange(0, an)
-        self.slider.setValue(0)
-        
-        self.s_grb.addWidget(self.s_label, 0, 0, 1, 1)
-        self.s_grb.addWidget(self.slider, 1, 0, 1, 1)
-        self.layout.addWidget(self.s_grb, 3, 2, 1, 1)
-        
+        self.adv_grb = GroupBox('Advance')
+        self.adv_label = QtGui.QLabel('Panel:')
+        self.adv_combo = QtGui.QComboBox()
+        self.adv_combo.addItems(['None', 'Control Param', 'Animation'])
+                
     def setlayout(self):
         self.resize(770, 620)
         self.f_input.setFixedHeight(120)
         self.f_input.setTabStopWidth(25)
         
-        self.plot_grb.setFixedWidth(150)
-        self.plot_grb.addWidget(self.lgd_label, 0, 0, 1, 1)
-        self.plot_grb.addWidget(self.lgd_input, 0, 1, 1, 1)
-        self.plot_grb.addWidget(self.clr_label, 1, 0, 1, 1)
-        self.plot_grb.addWidget(self.clr_combo, 1, 1, 1, 1)
-        
-        self.x_grb.setFixedWidth(150)        
+        self.x_grb.setFixedWidth(150)
+        self.x_grb.setFixedHeight(120)
         self.x_grb.addWidget(self.xlb_label, 0, 0, 1, 1)
         self.x_grb.addWidget(self.xlb_input, 0, 1, 1, 1)
         self.x_grb.addWidget(self.xub_label, 1, 0, 1, 1)
@@ -116,58 +85,45 @@ class Draw(QtGui.QWidget):
         self.x_grb.addWidget(self.xn_label, 2, 0, 1, 1)
         self.x_grb.addWidget(self.xn_input, 2, 1, 1, 1)
         
-        self.a_grb.setFixedWidth(150)
-        self.a_grb.addWidget(self.a_chbox, 0, 0, 1, 1)
-        self.a_grb.addWidget(self.a_label, 1, 0, 1, 1)
-        self.a_grb.addWidget(self.a_input, 1, 1, 1, 1)
-        self.a_grb.addWidget(self.alb_label, 2, 0, 1, 1)
-        self.a_grb.addWidget(self.alb_input, 2, 1, 1, 1)
-        self.a_grb.addWidget(self.aub_label, 3, 0, 1, 1)
-        self.a_grb.addWidget(self.aub_input, 3, 1, 1, 1)
-        self.a_grb.addWidget(self.astep_label, 4, 0, 1, 1)
-        self.a_grb.addWidget(self.astep_input, 4, 1, 1, 1)
+        self.plot_grb.setFixedWidth(150)
+        self.plot_grb.setFixedHeight(80)
+        self.plot_grb.addWidget(self.lgd_label, 0, 0, 1, 1)
+        self.plot_grb.addWidget(self.lgd_input, 0, 1, 1, 1)
+        self.plot_grb.addWidget(self.clr_label, 1, 0, 1, 1)
+        self.plot_grb.addWidget(self.clr_combo, 1, 1, 1, 1)
         
+        self.adv_grb.setFixedWidth(150)
+        self.adv_grb.addWidget(self.adv_label, 0, 0, 1, 1)
+        self.adv_grb.addWidget(self.adv_combo, 0, 1, 1, 1)
+        self.adv_grb.layout.setRowStretch(1, 1)
+                    
         self.layout = QtGui.QGridLayout()
         self.layout.addWidget(self.canvas, 0, 0, 3, 2)
-        self.layout.addWidget(self.f_input, 3, 0, -1, 2)
-        self.layout.addWidget(self.ctrl_btn, 4, 2, 1, 1)
+        self.layout.addWidget(self.f_input, 3, 0, 1, 2)
         self.layout.addWidget(self.x_grb, 0, 2, 1, 1)
         self.layout.addWidget(self.plot_grb, 1, 2, 1, 1)
-        self.layout.addWidget(self.a_grb, 2, 2, 1, 1)
+        self.layout.addWidget(self.adv_grb, 2, 2, -1, 1)
         
         self.setLayout(self.layout)
-
-    def setFigParams(self):
-#         if self.pctrl_flag:
-#             exec(unicode(self.f_input.toPlainText()))
-#             self.f = partial(f, a)
-#         else:
-#             exec(unicode(self.f_input.toPlainText()))
-#             self.f = f
-        
+    
+    # f settings
+    def setFunc(self):
         exec(unicode(self.f_input.toPlainText()))
         self.f = f
     
-        self.xn = int(float(unicode(self.xn_input.text())))
-        self.xlb = eval(unicode(self.xlb_input.text()))
-        self.xub = eval(unicode(self.xub_input.text()))
+    # plot settings
+    def setFigParams(self):
+        self.setFunc()
+        self.xn = int(float(str(self.xn_input.text())))
+        self.xlb = eval(str(self.xlb_input.text()))
+        self.xub = eval(str(self.xub_input.text()))
         self.x = np.linspace(self.xlb, self.xub, self.xn, endpoint=True)
         self.y = map(self.f, self.x)
         self.ylb, self.yub = min(self.y), max(self.y)
         self.legend = '$%s$' % unicode(self.lgd_input.text())
-        self.line_color = unicode(self.clr_combo.currentText())
+        self.line_color = str(self.clr_combo.currentText())
         self.draw(self.sp)
-
-    def setSldParams(self):
-        alb = float(unicode(self.alb_input.text()))
-        aub = float(unicode(self.aub_input.text()))
-        astep = float(unicode(self.astep_input.text()))
-        an = max(1, int((aub-alb)/step))
-        
-        self.s_label = QtGui.QLabel('Value: %.2f' % alb)
-        self.slider.setRange(0, an)
-        self.slider.setValue(0)
-        
+    
     def draw(self, subplot, f=None, x=None, isclear=True):
         if isclear: subplot.clear()
         if f is not None and x is not None:            
@@ -178,28 +134,13 @@ class Draw(QtGui.QWidget):
         ymrg = (self.yub-self.ylb)/self.xn
         subplot.set_xlim(self.xlb-xmrg, self.xub+xmrg)
         subplot.set_ylim(self.ylb-ymrg, self.yub+ymrg)
+        self.canvas.draw()
     
     def control(self):
-        if self.pause_flag:
-            self.pause_flag = 0
-            self.ctrl_btn.setText('stop')
-            self.setFigParams()
-            self.thread.start()
-        else:
-            self.pause_flag = 1
-            self.ctrl_btn.setText('play')
-    
-    def activateControlParameters(self):
-        self.pctrl_flag = not self.pctrl_flag
-        self.a_input.setDisabled(not self.pctrl_flag)
-        self.alb_input.setDisabled(not self.pctrl_flag)
-        self.aub_input.setDisabled(not self.pctrl_flag)
-        self.astep_input.setDisabled(not self.pctrl_flag)
-        if self.pctrl_flag:
-            self.loadSlider()
-        else:
-            self.s_grb.deleteLater()
-    
+        self.setFunc()
+        self.setFigParams()
+        self.draw(self.sp, self.f, self.x)
+        
     def closeEvent(self, event): # 重载退出事件，保证thread退出
         self.pause_flag = 1
         event.accept()
