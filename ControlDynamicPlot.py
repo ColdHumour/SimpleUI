@@ -24,6 +24,9 @@ class GroupBox(QtGui.QGroupBox):
     
     def addWidget(self, widget, *args, **kwargs):
         self.layout.addWidget(widget, *args, **kwargs)
+    
+    def addLayout(self, layout, *args, **kwargs):
+        self.layout.addLayout(layout, *args, **kwargs)
 
         
 class Draw(QtGui.QWidget):
@@ -35,8 +38,8 @@ class Draw(QtGui.QWidget):
         self.pctrl_flag = 0
         
         self.loadWidgets()
-        self.setFigParams()
-        self.setlayout()
+        self.setFigure()
+        self.loadLayout()
         
     def loadWidgets(self):
         figure = plt.figure()
@@ -48,7 +51,7 @@ class Draw(QtGui.QWidget):
         
         shcut = QtGui.QShortcut(self)
         shcut.setKey("CTRL+RETURN")
-        self.connect(shcut, QtCore.SIGNAL("activated()"), self.control)
+        self.connect(shcut, QtCore.SIGNAL("activated()"), self.plot)
         
         self.x_grb = GroupBox('Independent Variable')
         self.xlb_label = QtGui.QLabel('lower bound:')
@@ -69,9 +72,47 @@ class Draw(QtGui.QWidget):
         self.adv_grb = GroupBox('Advance')
         self.adv_label = QtGui.QLabel('Panel:')
         self.adv_combo = QtGui.QComboBox()
-        self.adv_combo.addItems(['None', 'Control Param', 'Animation'])
-                
-    def setlayout(self):
+        self.adv_combo.addItems(['None', 'Parameter', 'Animation'])
+        self.connect(self.adv_combo, QtCore.SIGNAL("currentIndexChanged(const QString&)"), self.loadAdvContent)
+        
+    def loadParameterWidgets(self):
+        self.prm_label = QtGui.QLabel('symbol:')
+        self.prm_lb_label = QtGui.QLabel('lower_bound:')
+        self.prm_ub_label = QtGui.QLabel('upper_bound:')
+        self.prm_st_label = QtGui.QLabel('step:')
+        self.prm_v_label = QtGui.QLabel('value:')
+        self.prm_input = QtGui.QLineEdit('a')
+        self.prm_lb_input = QtGui.QLineEdit('1.0')
+        self.prm_ub_input = QtGui.QLineEdit('5.0')
+        self.prm_st_input = QtGui.QLineEdit('1.0')
+        self.prm_v_input = QtGui.QLineEdit('1.0')
+        self.prm_widgets = [self.prm_label, self.prm_lb_label, self.prm_ub_label,
+                            self.prm_st_label, self.prm_v_label, self.prm_input, 
+                            self.prm_lb_input, self.prm_ub_input, self.prm_st_input, 
+                            self.prm_v_input]
+        
+        self.adv_grb.addWidget(self.prm_label, 1, 0, 1, 1)
+        self.adv_grb.addWidget(self.prm_input, 1, 1, 1, 1)
+        self.adv_grb.addWidget(self.prm_lb_label, 2, 0, 1, 1)
+        self.adv_grb.addWidget(self.prm_lb_input, 2, 1, 1, 1)
+        self.adv_grb.addWidget(self.prm_ub_label, 3, 0, 1, 1)
+        self.adv_grb.addWidget(self.prm_ub_input, 3, 1, 1, 1)
+        self.adv_grb.addWidget(self.prm_st_label, 4, 0, 1, 1)
+        self.adv_grb.addWidget(self.prm_st_input, 4, 1, 1, 1)
+        self.adv_grb.addWidget(self.prm_v_label, 5, 0, 1, 1)
+        self.adv_grb.addWidget(self.prm_v_input, 5, 1, 1, 1)
+        self.adv_grb.layout.setRowStretch(6, 1)
+    
+    def loadAnimationWidgets(self):
+        self.ani_chb = QtGui.QCheckBox('cycling')
+        self.ani_btn = QtGui.QPushButton('play')
+        self.ani_widgets = [self.ani_chb, self.ani_btn]
+        
+        self.adv_grb.addWidget(self.ani_chb, 1, 0, 1, -1)
+        self.adv_grb.addWidget(self.ani_btn, 2, 0, 1, -1)
+        self.adv_grb.layout.setRowStretch(3, 1)
+        
+    def loadLayout(self):
         self.resize(770, 620)
         self.f_input.setFixedHeight(120)
         self.f_input.setTabStopWidth(25)
@@ -93,26 +134,59 @@ class Draw(QtGui.QWidget):
         self.plot_grb.addWidget(self.clr_combo, 1, 1, 1, 1)
         
         self.adv_grb.setFixedWidth(150)
-        self.adv_grb.addWidget(self.adv_label, 0, 0, 1, 1)
-        self.adv_grb.addWidget(self.adv_combo, 0, 1, 1, 1)
+        adv_ctrl_layout = QtGui.QHBoxLayout()
+        adv_ctrl_layout.addWidget(self.adv_label)
+        adv_ctrl_layout.addWidget(self.adv_combo)
+        self.adv_grb.addLayout(adv_ctrl_layout, 0, 0, 1, -1)
         self.adv_grb.layout.setRowStretch(1, 1)
                     
-        self.layout = QtGui.QGridLayout()
-        self.layout.addWidget(self.canvas, 0, 0, 3, 2)
-        self.layout.addWidget(self.f_input, 3, 0, 1, 2)
-        self.layout.addWidget(self.x_grb, 0, 2, 1, 1)
-        self.layout.addWidget(self.plot_grb, 1, 2, 1, 1)
-        self.layout.addWidget(self.adv_grb, 2, 2, -1, 1)
+        layout = QtGui.QGridLayout()
+        layout.addWidget(self.canvas, 0, 0, 3, 2)
+        layout.addWidget(self.f_input, 3, 0, 1, 2)
+        layout.addWidget(self.x_grb, 0, 2, 1, 1)
+        layout.addWidget(self.plot_grb, 1, 2, 1, 1)
+        layout.addWidget(self.adv_grb, 2, 2, -1, 1)
         
-        self.setLayout(self.layout)
+        self.setLayout(layout)
     
+    def loadAdvContent(self):
+        signal = str(self.adv_combo.currentText())
+        if signal == 'None':
+            try:
+                for w in self.prm_widgets:
+                    w.deleteLater()
+            except:
+                pass
+            
+            try:
+                for w in self.ani_widgets:
+                    w.deleteLater()
+            except:
+                pass
+        elif signal == 'Parameter':
+            try:
+                for w in self.ani_widgets:
+                    w.deleteLater()
+            except:
+                pass
+            finally:
+                self.loadParameterWidgets()
+        elif signal == 'Animation':
+            try:
+                for w in self.prm_widgets:
+                    w.deleteLater()
+            except:
+                pass
+            finally:
+                self.loadAnimationWidgets()
+            
     # f settings
     def setFunc(self):
         exec(unicode(self.f_input.toPlainText()))
         self.f = f
     
     # plot settings
-    def setFigParams(self):
+    def setFigure(self):
         self.setFunc()
         self.xn = int(float(str(self.xn_input.text())))
         self.xlb = eval(str(self.xlb_input.text()))
@@ -136,9 +210,9 @@ class Draw(QtGui.QWidget):
         subplot.set_ylim(self.ylb-ymrg, self.yub+ymrg)
         self.canvas.draw()
     
-    def control(self):
+    def plot(self):
         self.setFunc()
-        self.setFigParams()
+        self.setFigure()
         self.draw(self.sp, self.f, self.x)
         
     def closeEvent(self, event): # 重载退出事件，保证thread退出
@@ -152,11 +226,6 @@ class MyThread(QtCore.QThread):
         self.window = MyWindow
         
     def run(self):
-        for i,xub in enumerate(self.window.x):
-            new_x = np.linspace(self.window.xlb, xub, max(i, 2), endpoint=True)
-            self.window.draw(self.window.sp, self.window.f, new_x)
-            self.window.canvas.draw()
-            if self.window.pause_flag: break
         self.window.pause_flag = 1
         self.window.ctrl_btn.setText('play')
         self.quit()
