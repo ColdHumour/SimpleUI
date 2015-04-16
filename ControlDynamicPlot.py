@@ -2,10 +2,8 @@
 
 import sys
 import time
-import Image
 import StringIO
 from math import *
-from itertools import cycle
 from functools import partial
 
 import numpy as np
