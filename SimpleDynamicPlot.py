@@ -2,9 +2,9 @@
 
 import sys
 import time
-import Image
 import StringIO
 from itertools import cycle
+from PIL import Image
 
 import numpy as np
 from PyQt4 import QtCore, QtGui
